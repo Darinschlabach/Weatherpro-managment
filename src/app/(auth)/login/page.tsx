@@ -1,10 +1,16 @@
 import { LoginForm } from "@/components/auth/LoginForm";
+import { MissingConfig } from "@/components/setup/MissingConfig";
+import { getEnvConfigurationHint, getPublicEnvOrNull } from "@/lib/env";
 
 type LoginPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
+  if (!getPublicEnvOrNull()) {
+    return <MissingConfig hint={getEnvConfigurationHint()} />;
+  }
+
   const params = (await searchParams) ?? {};
   const error = typeof params.error === "string" ? params.error : "";
   const success = typeof params.success === "string" ? params.success : "";

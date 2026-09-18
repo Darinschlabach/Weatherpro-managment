@@ -6,28 +6,32 @@ import type { Profile } from "@/types/database";
 const LOGIN_PATH = "/login";
 
 export async function getSessionUser() {
-  const supabase = await createSupabaseServerClient();
-
-  let authResult: Awaited<ReturnType<typeof supabase.auth.getUser>>;
   try {
-    authResult = await supabase.auth.getUser();
+    const supabase = await createSupabaseServerClient();
+
+    let authResult: Awaited<ReturnType<typeof supabase.auth.getUser>>;
+    try {
+      authResult = await supabase.auth.getUser();
+    } catch {
+      return { user: null, profile: null };
+    }
+
+    const user = (authResult.data.user as User | null) ?? null;
+    if (!user || authResult.error) {
+      return { user: null, profile: null };
+    }
+
+    const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    const profile = data as Profile | null;
+
+    if (!profile || !profile.is_active) {
+      return { user: null, profile: null };
+    }
+
+    return { user, profile };
   } catch {
     return { user: null, profile: null };
   }
-
-  const user = (authResult.data.user as User | null) ?? null;
-  if (!user || authResult.error) {
-    return { user: null, profile: null };
-  }
-
-  const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
-  const profile = data as Profile | null;
-
-  if (!profile || !profile.is_active) {
-    return { user: null, profile: null };
-  }
-
-  return { user, profile };
 }
 
 export async function requireUser() {

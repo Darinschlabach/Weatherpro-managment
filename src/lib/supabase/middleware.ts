@@ -31,6 +31,34 @@ function signOutRedirect(request: NextRequest, sessionResponse: NextResponse) {
   return redirectWithSessionCookies(request, "/login", sessionResponse);
 }
 
+function configurationMissingResponse(hint: string) {
+  return new NextResponse(
+    `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Weatherpro configuration</title>
+  </head>
+  <body style="margin:0;font-family:Arial,sans-serif;background:#f4f6f8;color:#1e293b">
+    <main style="max-width:40rem;margin:4rem auto;padding:2rem;background:#fff;border:1px solid #e2e8f0;border-radius:12px">
+      <p style="margin:0;font-size:1.75rem;font-weight:700;color:#185c86">Weatherpro</p>
+      <h1 style="margin:1.25rem 0 0;font-size:1.25rem">Missing server configuration</h1>
+      <p style="line-height:1.6">Add these in Vercel → Settings → Environment Variables for Production and Preview, then Redeploy:</p>
+      <ul>
+        <li>NEXT_PUBLIC_SUPABASE_URL</li>
+        <li>NEXT_PUBLIC_SUPABASE_ANON_KEY</li>
+        <li>SUPABASE_SERVICE_ROLE_KEY</li>
+        <li>NEXT_PUBLIC_SITE_URL (optional on Vercel)</li>
+      </ul>
+      <p style="padding:0.75rem 1rem;background:#fffbeb;border:1px solid #fde68a;border-radius:8px">${hint.replace(/[<>&"]/g, "")}</p>
+    </main>
+  </body>
+</html>`,
+    { status: 200, headers: { "content-type": "text/html; charset=utf-8" } },
+  );
+}
+
 export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
@@ -40,12 +68,9 @@ export async function updateSession(request: NextRequest) {
 
   const env = getPublicEnvOrNull();
   if (!env) {
-    const hint = getEnvConfigurationHint() ?? "Check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local";
+    const hint = getEnvConfigurationHint() ?? "Supabase environment variables are missing.";
     console.error("[middleware] Supabase env invalid:", hint);
-    return new NextResponse(
-      `Server configuration error\n\n${hint}\n\nFix .env.local, save the file, and restart "npm run dev".`,
-      { status: 500, headers: { "content-type": "text/plain; charset=utf-8" } },
-    );
+    return configurationMissingResponse(hint);
   }
 
   let response = NextResponse.next({ request });
