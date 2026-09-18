@@ -20,6 +20,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# supabase
+supabase/.temp/
+
 # misc
 .DS_Store
 *.pem
