@@ -38,8 +38,13 @@ Key distinction:
 Also in Supabase:
 
 1. Go to **Authentication → Providers** and keep **Email** enabled.
-2. Optional for local development: **Authentication → Providers → Email → Confirm email** can be disabled so locally created users can sign in immediately. The bootstrap script and Admin "Add User" flow already mark emails as confirmed.
-3. Add `http://localhost:3000/auth/callback` under **Authentication → URL Configuration → Redirect URLs**, and set the Site URL to `http://localhost:3000` for local use.
+2. Keep **Confirm email** enabled in production so invite and reset links are required.
+3. Under **Authentication → URL Configuration**:
+   - **Site URL:** `https://dashboard.weatherproinsulation.com`
+   - **Redirect URLs:**
+     - `https://dashboard.weatherproinsulation.com/**`
+     - `http://localhost:3000/**`
+4. Update the **Invite user** and **Reset password** email templates if needed (see the token_hash links in the implementation notes). Local development still uses `NEXT_PUBLIC_SITE_URL=http://localhost:3000`.
 
 ## 3. Set environment variables
 

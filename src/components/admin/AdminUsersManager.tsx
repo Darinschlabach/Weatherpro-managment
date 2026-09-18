@@ -7,7 +7,6 @@ import { createUserAction, setUserActiveAction, updateUserAction } from "@/app/a
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { PasswordInput } from "@/components/auth/PasswordInput";
 import type { AppRole } from "@/types/database";
 
 export type AdminUserRow = {
@@ -54,7 +53,7 @@ export function AdminUsersManager({ rows, currentUserId }: { rows: AdminUserRow[
     <div>
       <PageHeader
         title="User management"
-        subtitle="Create and manage Weatherpro user accounts."
+        subtitle="Invite and manage Weatherpro user accounts."
         action={
           <button
             type="button"
@@ -66,7 +65,7 @@ export function AdminUsersManager({ rows, currentUserId }: { rows: AdminUserRow[
             className="inline-flex items-center gap-1.5 rounded-md bg-brand-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-700"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
-            Add User
+            Invite User
           </button>
         }
       />
@@ -168,7 +167,7 @@ export function AdminUsersManager({ rows, currentUserId }: { rows: AdminUserRow[
               return;
             }
             setAddOpen(false);
-            refreshWithMessage("User created.");
+            refreshWithMessage("Invitation sent.");
           });
         }}
       />
@@ -207,7 +206,7 @@ function AddUserDialog({
   onSubmit: (formData: FormData) => void;
 }) {
   return (
-    <Modal title="Add User" description="Create a Weatherpro account with a temporary password." open={open} onClose={onClose}>
+    <Modal title="Invite User" description="Send a Weatherpro invitation email so the user can set their own password." open={open} onClose={onClose}>
       <form action={onSubmit} className="space-y-3">
         <div>
           <label htmlFor="add-firstName" className="mb-1 block text-sm font-medium text-slate-700">
@@ -236,18 +235,6 @@ function AddUserDialog({
             <option value="user">User</option>
           </select>
         </div>
-        <div>
-          <label htmlFor="add-temporaryPassword" className="mb-1 block text-sm font-medium text-slate-700">
-            Temporary Password
-          </label>
-          <PasswordInput
-            id="add-temporaryPassword"
-            name="temporaryPassword"
-            required
-            autoComplete="new-password"
-            className={inputClassName}
-          />
-        </div>
         <div className="flex justify-end gap-2 pt-2">
           <button
             type="button"
@@ -261,7 +248,7 @@ function AddUserDialog({
             disabled={pending}
             className="rounded-md bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-70"
           >
-            {pending ? "Creating..." : "Create user"}
+            {pending ? "Sending..." : "Send invitation"}
           </button>
         </div>
       </form>

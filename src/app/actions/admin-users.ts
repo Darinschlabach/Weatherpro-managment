@@ -1,6 +1,7 @@
 "use server";
 
 import { requireAdmin } from "@/lib/auth";
+import { authCallbackUrl } from "@/lib/auth-urls";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { normalizeRole, wouldLeaveNoActiveAdmin, type AppRole } from "@/lib/roles";
 
@@ -31,7 +32,6 @@ export async function createUserAction(formData: FormData): Promise<ActionResult
   const firstName = getString(formData, "firstName");
   const lastName = getString(formData, "lastName");
   const email = getString(formData, "email").toLowerCase();
-  const temporaryPassword = getString(formData, "temporaryPassword");
   const role = normalizeRole(getString(formData, "role"));
 
   if (!firstName || !lastName) {
@@ -40,24 +40,23 @@ export async function createUserAction(formData: FormData): Promise<ActionResult
   if (!email) {
     return { ok: false, error: "Email is required." };
   }
-  if (temporaryPassword.length < 8) {
-    return { ok: false, error: "Temporary password must be at least 8 characters." };
-  }
 
   const displayName = displayNameFrom(firstName, lastName, email);
-  const { data, error } = await admin.auth.admin.createUser({
-    email,
-    password: temporaryPassword,
-    email_confirm: true,
-    user_metadata: {
+  const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
+    data: {
       first_name: firstName,
       last_name: lastName,
       display_name: displayName,
     },
+    redirectTo: authCallbackUrl("/set-password"),
   });
 
   if (error || !data.user) {
-    return { ok: false, error: error?.message ?? "Failed to create user." };
+    const message = error?.message ?? "Failed to invite user.";
+    if (message.toLowerCase().includes("already") || message.toLowerCase().includes("registered")) {
+      return { ok: false, error: "A user with this email already exists." };
+    }
+    return { ok: false, error: message };
   }
 
   const { error: profileError } = await admin.from("profiles").upsert({

@@ -11,6 +11,7 @@ export const config = {
     "/login",
     "/forgot-password",
     "/reset-password",
+    "/set-password",
     "/dashboard",
     "/invoices",
     "/quotes",

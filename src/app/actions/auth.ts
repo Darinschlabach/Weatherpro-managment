@@ -1,9 +1,8 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getPublicEnv } from "@/lib/env";
+import { authCallbackUrl } from "@/lib/auth-urls";
 
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -53,14 +52,8 @@ export async function forgotPasswordAction(formData: FormData): Promise<{ error?
   }
 
   const supabase = await createSupabaseServerClient();
-  const env = getPublicEnv();
-  const headerStore = await headers();
-  const origin = headerStore.get("origin");
-  const siteOrigin = new URL(env.NEXT_PUBLIC_SITE_URL).origin;
-  const redirectOrigin = origin && /^https?:\/\//i.test(origin) ? origin : siteOrigin;
-
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${redirectOrigin}/auth/callback?next=/reset-password`,
+    redirectTo: authCallbackUrl("/reset-password"),
   });
 
   if (error) {
@@ -73,6 +66,7 @@ export async function forgotPasswordAction(formData: FormData): Promise<{ error?
 export async function updatePasswordAction(formData: FormData): Promise<{ error?: string } | void> {
   const password = getString(formData, "password");
   const confirmPassword = getString(formData, "confirmPassword");
+  const flow = getString(formData, "flow") === "invite" ? "invite" : "reset";
 
   if (password.length < 8) {
     return { error: "Password must be at least 8 characters." };
@@ -82,10 +76,22 @@ export async function updatePasswordAction(formData: FormData): Promise<{ error?
   }
 
   const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "This link is invalid or has expired." };
+  }
+
   const { error } = await supabase.auth.updateUser({ password });
   if (error) {
     return { error: error.message };
   }
 
+  if (flow === "invite") {
+    redirect("/dashboard");
+  }
+
+  await supabase.auth.signOut();
   redirect("/login?success=Password%20updated.%20Sign%20in%20with%20your%20new%20password.");
 }

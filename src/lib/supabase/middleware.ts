@@ -17,7 +17,8 @@ type CookieToSet = {
   };
 };
 
-const AUTH_ROUTES = new Set(["/login", "/forgot-password", "/reset-password"]);
+const AUTH_ROUTES = new Set(["/login", "/forgot-password"]);
+const PASSWORD_SETUP_ROUTES = new Set(["/reset-password", "/set-password"]);
 
 function redirectWithSessionCookies(request: NextRequest, pathname: string, sessionResponse: NextResponse) {
   const redirectResponse = NextResponse.redirect(new URL(pathname, request.url));
@@ -106,8 +107,9 @@ export async function updateSession(request: NextRequest) {
 
   const isServerAction = request.headers.has("next-action");
   const isAuthRoute = AUTH_ROUTES.has(pathname);
+  const isPasswordSetupRoute = PASSWORD_SETUP_ROUTES.has(pathname);
   const isRootRoute = pathname === "/";
-  const isProtectedRoute = !isAuthRoute && !isRootRoute && !pathname.startsWith("/auth/");
+  const isProtectedRoute = !isAuthRoute && !isPasswordSetupRoute && !isRootRoute && !pathname.startsWith("/auth/");
 
   if (!user) {
     if (isServerAction) {
@@ -118,6 +120,10 @@ export async function updateSession(request: NextRequest) {
       loginUrl.searchParams.set("next", pathname);
       return NextResponse.redirect(loginUrl);
     }
+    return response;
+  }
+
+  if (isPasswordSetupRoute) {
     return response;
   }
 
